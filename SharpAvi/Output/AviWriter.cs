@@ -88,10 +88,14 @@ namespace SharpAvi.Output
 
         }
 
-        /// <summary>Frame rate.</summary>
+        /// <summary>Max super index entries.</summary>
         /// <remarks>
-        /// The value of the property is rounded to 3 fractional digits.
-        /// Default value is <c>1</c>.
+        /// The maximum amount of super index entries to use.
+        /// This correlates with the biggest possible filesize you can achieve.
+        /// The default value of 256 is good for compatibility and lets you go up to
+        /// something like 1 TB. Raise this to about 256 times the expected filesize
+        /// in TB.
+        /// Default value is <c>256</c>.
         /// </remarks>
         [Obsolete("Only use this option if you know what you are doing. You may need a number higher than the default 256 to write extremely large files (>1TB).")]
         public int MaxSuperIndexEntries
