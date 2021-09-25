@@ -17,7 +17,8 @@ namespace SharpAvi.Output
     /// </remarks>
     public class AviWriter : IDisposable, IAviStreamWriteHandler
     {
-        private const int MAX_SUPER_INDEX_ENTRIES = 256;
+        //private const int MAX_SUPER_INDEX_ENTRIES = 256;
+        private int maxSuperIndexEntries = 256;
         private const int MAX_INDEX_ENTRIES = 15000;
         private const int INDEX1_ENTRY_SIZE = 4 * sizeof(uint);
         private const int RIFF_AVI_SIZE_TRESHOLD = 512 * 1024 * 1024;
@@ -85,6 +86,27 @@ namespace SharpAvi.Output
             streamsRO = new ReadOnlyCollection<IAviStream>(streamsList);
 #endif
 
+        }
+
+        /// <summary>Frame rate.</summary>
+        /// <remarks>
+        /// The value of the property is rounded to 3 fractional digits.
+        /// Default value is <c>1</c>.
+        /// </remarks>
+        [Obsolete("Only use this option if you know what you are doing. You may need a number higher than the default 256 to write extremely large files (>1TB).")]
+        public int MaxSuperIndexEntries
+        {
+            get { return maxSuperIndexEntries; }
+            set
+            {
+                Contract.Requires(value >= 256);
+
+                lock (syncWrite)
+                {
+                    CheckNotStartedWriting();
+                    maxSuperIndexEntries = value;
+                }
+            }
         }
 
         /// <summary>Frame rate.</summary>
@@ -446,7 +468,7 @@ namespace SharpAvi.Output
                 }
 
                 var si = streamsInfo[stream.Index];
-                if (si.SuperIndex.Count == MAX_SUPER_INDEX_ENTRIES)
+                if (si.SuperIndex.Count == maxSuperIndexEntries)
                 {
                     throw new InvalidOperationException("Cannot write more frames to this stream.");
                 }
@@ -614,7 +636,7 @@ namespace SharpAvi.Output
 
         private void WriteJunkInsteadOfMissingSuperIndexEntries()
         {
-            var missingEntriesCount = streamsInfo.Sum(si => MAX_SUPER_INDEX_ENTRIES - si.SuperIndex.Count);
+            var missingEntriesCount = streamsInfo.Sum(si => maxSuperIndexEntries - si.SuperIndex.Count);
             if (missingEntriesCount > 0)
             {
                 var junkDataSize = missingEntriesCount * sizeof(uint) * 4 - RiffItem.ITEM_HEADER_SIZE;
